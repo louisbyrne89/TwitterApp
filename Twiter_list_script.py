@@ -5,7 +5,7 @@ Created on Sat Sep  2 14:15:59 2017
 @author: Louis
 """
 
-from Twitter_list_object import Twitter_list
+from Twitter.Twitter_objects import Twitter_list
 
 tl = Twitter_list()
 
