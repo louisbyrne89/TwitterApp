@@ -39,21 +39,21 @@ def create_table_users():
                    ''')
     db.commit()
     db.close()
+ 
     
 def create_table_scores():
     db = sqlite3.connect(r'C:\Users\Louis\python\twitter_databases\twitdb.db')
     cursor = db.cursor()
     cursor.execute('''
-                   CREATE TABLE scores(user_id INTEGER,
-                                       keyword TEXT,
-                                       name_score INTEGER,
-                                       description_score INTEGER,
-                                       tweets_score INTEGER,
+                   CREATE TABLE scores(user_id INTEGER NOT NULL,
+                                       keyword TEXT NOT NULL,
+                                       tweets_score INTEGER NOT NULL,
                                        FOREIGN KEY(user_id) REFERENCES users(user_id)
                                        )
                    ''');
     db.commit()
     db.close()
+ 
     
 def drop_table(tablename):
     db = sqlite3.connect(r'C:\Users\Louis\python\twitter_databases\twitdb.db')
