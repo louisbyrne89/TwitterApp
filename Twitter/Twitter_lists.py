@@ -4,19 +4,19 @@ Created on Wed Sep 13 01:07:55 2017
 
 @author: Louis
 """
-from Mediators.mediators import Mediator, Database_connector
+from Mediators.mediators import Database_connector
 from Twitter.Twitter_objects import Twitter_object
 
 class Twitter_list:
     """Twitter list class. Defines a list of twitter objects."""
-    def __init__(self,columns=None,data=None,obj=None):
+    def __init__(self,mediator=None,columns=None,data=None,obj=None):
         """Initiates function. If data (2D list of twitter data with columns
         provided as seperate variable) is provided when class is initiated,
         for each row of data one Tweet object is created and stored in the 
         'data' attribute. If a tweet is provided, this is inserted directly
         into list. Otherwise 'data' attribute is empty cell."""
         self.Database_connector = Database_connector
-        self.Mediator = Mediator
+        self.Mediator = mediator
         self.data = []
         if data and columns:            
             for row in data:
@@ -61,7 +61,7 @@ class Tweet_list(Twitter_list):
         for tweet in self.data:
             if not set(['user','text','tweet_id','url','hashtags','date',
                         'user_mentions']) <= set(tweet.fields):
-                raise ValueError('All required fields were not provided.')  
+                raise KeyError('All required fields were not provided.')  
         self.Database_connector.insert(self,tablename)
     
     def retrieve(self,tablename='tweets',fields=None,**kwargs):
@@ -92,7 +92,7 @@ class User_list(Twitter_list):
         for user in self.data:
             if (not set(['user_id','screen_name','description']) 
                         <= set(user.fields)):
-                raise ValueError('All required fields were not provided.')
+                raise KeyError('All required fields were not provided.')
         self.Database_connector.insert(self,tablename)
     
     def retrieve(self,tablename='users',fields=None,**kwargs):

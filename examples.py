@@ -6,17 +6,18 @@ Created on Tue Sep  5 20:43:33 2017
 """
 import Twitter.Twitter_functions as tf
 from Twitter.Twitter_lists import Tweet_list, User_list
+from Mediators.mediators import Api_control
 
 # Connect to api
-api = tf.request_api()
+api = Api_control()
 
 
 # search twitter for keywords
 search = 'search/tweets'
 indict = {'q': 'python jobs',
           'lang':'en'}
-req = api.request(search, indict)
-tweet_list, user_list = tf.sampling(api,search,indict)
+req = api.api.request(search, indict)
+tweet_list, user_list = tf.sampling(api.api,search,indict)
 
 # search twitter stream for keywords
 search = 'statuses/filter'

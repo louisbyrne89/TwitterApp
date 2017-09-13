@@ -4,21 +4,10 @@ Created on Sat Aug 26 03:13:22 2017
 
 @author: Louis
 """
-from TwitterAPI import TwitterAPI as tw
-from Twitter.Twitter_objects import Tweet, User, Twitter_object
-from Twitter.Twitter_lists import Twitter_list, Tweet_list, User_list
-import json
-
-def request_api():
-    """Twitter API keys loaded from file and API connects to API."""
-    with open(r'C:\Users\Louis\python\twitter_not_git\keys.txt', 'r') as f:
-        keys = json.load(f)
-    api = tw(keys['consumer_key'],
-             keys['consumer_secret'],
-             keys['access_token'],
-             keys['access_token_secret'])
-    return api
-
+from Twitter.Twitter_objects import Tweet, User
+from Twitter.Twitter_lists import Tweet_list, User_list
+from Mediators.mediators import Api_control
+from Mediators.mediators import Mediator
 
 def create_tweet_object(item):
     """Creates a single tweet object. Requres one input:
@@ -67,7 +56,10 @@ def sampling(api,search,indict):
         indict: dictionary of search parameters
     """
     # make API request.
-    req = api.request(search, indict)
+    api = Api_control()
+    api.request(search,indict)
+    req = api.req
+    #req = api.request(search, indict)
     for item in req:
             print(item['text'] if 'text' in item else item)
             if len(item)>1:

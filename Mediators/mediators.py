@@ -7,17 +7,46 @@ Created on Wed Sep 13 00:30:24 2017
 import sqlite3
 import Twitter
 from Twitter.Twitter_objects import Twitter_object
+import datetime
+import time
+from TwitterAPI import TwitterAPI as tw
+import json
 
-        
-class Mediator:
+class Api_control:
+    """This class controls interactions with the TwitterAPI."""  
     def __init__(self):
-        self.tweets = Twitter.Twitter_lists.Tweet_list(self)
-        self.users = Twitter.Twitter_lists.User_list(self)
-        self.network = Network(self)
+        """Twitter API keys loaded from file and API connects to API."""
+        
+        with open(r'C:\Users\Louis\python\twitter_not_git\keys.txt', 'r') as f:
+            keys = json.load(f)
+            
+        self.api = tw(keys['consumer_key'],
+                   keys['consumer_secret'],
+                   keys['access_token'],
+                   keys['access_token_secret'])
+        self.quotas = {}
+        
+    def request(self,search,indict):
+        """Makes API request. If quota is used up then process is delayed for
+        15 minutes. Input arguments:
+            search: Twitter API resource to query.
+            indict: filter parameters
+        """
+        if search not in self.quotas.keys() or self.quotas[search]:
+            req = self.api.request(search, indict)              
+            quota = req.get_rest_quota()['remaining']
+            self.update_usage_limits(search,quota)
+            self.req = req
+        else:
+            print('Quota used for "{}". Sleeping for 15 minutes.'.format(
+                    search))
+            time.sleep(900)
     
-    
-    
- 
+    def update_usage_limits(self,search,quota):
+        """Update Api_control with new Twitter rate quota following request."""
+        ti = datetime.datetime.now()
+        self.quotas[search] = {'quota':quota,'time':ti}
+         
        
 class Database_connector:
     def insert(list_obj,tablename):
@@ -38,7 +67,6 @@ class Database_connector:
             instr = ('INSERT INTO {}({}) VALUES ({})'
                      .format(tablename,fields,questions))
             # Attempts to insert data.
-            #import pdb; pdb.set_trace()
             try:
                 cursor.execute(instr,varil)
                 list_obj.db.commit()
@@ -95,3 +123,4 @@ class Database_connector:
             obj = Twitter_object(**kwargs)    
             list_obj.data.append(obj)
         list_obj.db.close()
+        

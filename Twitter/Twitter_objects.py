@@ -42,11 +42,11 @@ class Tweet(Twitter_object):
     """Tweet subclass"""
     def __init__(self,**kwargs):
         """Initiates class. If any of the fields 'user','text' or 'tweet' 
-        are not provided then an error is returned.
+        are not provided as **kwargs then an error is returned.
         """
         super().__init__(**kwargs)
         if not set(['user','text','tweet_id']) <= set(kwargs.keys()):
-            raise ValueError('Either text, user or tweet_id field not ' +
+            raise KeyError('Either text, user or tweet_id field not ' +
                                   'provided.')
     
     def __str__(self):
@@ -57,15 +57,22 @@ class User(Twitter_object):
     """User_subclass"""
     def __init__(self,**kwargs):
         """Initiates class. If either of the fields 'screen_name' or 'user_id' 
-        are not provided then an error is returned.
+        are not provided as **kwargs then an error is returned.
         """
         super().__init__(**kwargs)
         if (not set(['user_id','screen_name','description']) 
                     <= set(kwargs.keys())):
-            raise ValueError('Either user_id or screen_name field not ' +
+            raise KeyError('Either user_id or screen_name field not ' +
                                   'provided.')
     
     def __str__(self):
         return '{}: {}'.format(self.screen_name, self.description)
-  
     
+    def get_tweets(self,api,count=2000):
+        """Retrieves last 'count' tweets from user. Default set to 2000."""
+        search = 'statuses/user_timeline'
+        api.request(search, {'user_id': self.user_id,
+                             'count': count,
+                             'exculde_replies':'true',
+                             'include rts': 'false'})
+       return api
