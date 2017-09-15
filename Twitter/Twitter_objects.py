@@ -183,14 +183,15 @@ class Tweet_list(Twitter_list):
     def process(self,keywords):
         """Returns the percentage of tweets containing a set of keywords.
         """
-        self.keyword_scores = {}
+        keyword_scores = {}
         for keyword in keywords:
             score = 0
             for item in self.data:   
                 if keyword in item.text.lower():
                     score += 1
                 score = score/len(self.data)
-            self.keyword_scores[keyword] = score
+            keyword_scores[keyword] = score
+        return keyword_scores
     
     
 class User_list(Twitter_list):

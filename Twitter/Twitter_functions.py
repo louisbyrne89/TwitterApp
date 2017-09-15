@@ -15,10 +15,10 @@ def get_user_tweets(control,user,count=2000):
         user: user instance.
     """
     search = 'statuses/user_timeline'
-    req = control._api_control.api.request(search, {'user_id': user.user_id,
-                                                    'count': count,
-                                                    'exculde_replies':'true',
-                                                    'include rts': 'false'})
+    req = control._api_control.request(search, {'user_id': user.user_id,
+                                                'count': count,
+                                                'exculde_replies':'true',
+                                                'include rts': 'false'})
     return control.create_tweet_list(req)
 
 
@@ -29,8 +29,7 @@ def sample_tweets(control, search, indict):
         search: twitter feature to search
         indict: keywords to search
     """
-    
-    req = control._api_control.api.request(search,indict)
+    req = control._api_control.request(search,indict)
     return control.create_tweet_list(req,p2s=True), control.create_user_list(req)
 
 
@@ -46,18 +45,24 @@ def process_tweets(control, keywords):
     user_list.retrieve(user_id=user_id)
     for user in user_list:
         tweet_list = get_user_tweets(control,user)
-        tweet_list.process(keywords)
-        keyword_scores = tweet_list.keyword_scores
-    
+        scores = tweet_list.process(keywords)
+        #import pdb;pdb.set_trace()
+        for keys,scores in scores.items():
+            fields = {'keyword':keys,
+                      'tweets_score':scores,
+                      'user_id':user.user_id}
+        control._database_connector.insert('scores',fields,
+                                           user_id = '=' + str(user.user_id))
+        print(user)
 
 
 def get_following(control, user, cursor=-1):
     """Return users followers as user list. Also updates table with
     latest cursor."""
     search = 'friends/list'
-    req = control._api_control.api.request(search,{'user_id':user.user_id,
-                                                   'count':200,
-                                                   'cursor':cursor})
+    req = control._api_control.request(search,{'user_id':user.user_id,
+                                               'count':200,
+                                               'cursor':cursor})
     txt = json.loads(req.text)
     
     if txt['users']:
@@ -77,9 +82,9 @@ def get_followers(control,user,cursor=-1):
     """Return users followings as user list. Also updates table with
     latest cursor."""
     search = 'followers/list'
-    req = control._api_control.api.request(search,{'user_id':user.user_id,
-                                                   'count':200,
-                                                   'cursor':cursor})
+    req = control._api_control.request(search,{'user_id':user.user_id,
+                                               'count':200,
+                                               'cursor':cursor})
     txt = json.loads(req.text)
     if txt['users']:
         fields = {'ncursor_followers':txt['next_cursor']}

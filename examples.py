@@ -41,6 +41,11 @@ tweet_list.retrieve(fields=['tweet_id','text','user'],tweet_id='>100',
 user = user_list[0]
 #user_list = tf.get_followers(ctrl, user)
 
+# process twitter users for keywords.
+keywords = ['python','sql','junior','flexi',
+                'remote','london','uk','bristol']
+tf.process_tweets(ctrl, keywords)
+
 
 
     

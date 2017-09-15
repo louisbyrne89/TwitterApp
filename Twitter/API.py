@@ -39,6 +39,7 @@ class Api_control:
             if search not in self.quotas.keys() or self.quotas[search]:
                 req = self.api.request(search, indict)              
                 quota = req.get_rest_quota()['remaining']
+                #import pdb; pdb.set_trace()
                 self.update_usage_limits(search,quota)
                 return req
             else:
@@ -54,6 +55,7 @@ class Api_control:
         """
         ti = datetime.datetime.now()
         self.quotas[search] = {'quota':quota,'time':ti}
+        #import pdb; pdb.set_trace()
          
        
 class Database_connector:
@@ -74,7 +76,7 @@ class Database_connector:
             # fields ('fields'), question marks ('questions') and a list of
             # the values to be inserted (varil)    
             fields = ','.join(obj.fields)
-            questions = ','.join('?' * len(fields.split(','))) 
+            questions = ','.join('?' * len(obj.fields)) 
             varil = [getattr(obj,fi) for fi in obj.fields]
             instr = ('INSERT INTO {}({}) VALUES ({})'
                      .format(tablename,fields,questions))
@@ -87,6 +89,22 @@ class Database_connector:
                 print('Unable to insert {}.'.format(str(idx)))
         # Close database.
         db.close()
+    
+    def insert(tablename, fields, **kwargs):
+        db = sqlite3.connect(
+                r'C:\Users\Louis\python\twitter_databases\twitdb.db')
+        cursor = db.cursor()
+        fieldstr = ', '.join(list(fields.keys()))
+        questions = ','.join('?' * len(fields))
+        instr = 'INSERT INTO {}({}) VALUES ({})'.format(tablename,fieldstr,
+                                                        questions)
+        varil = list(fields.values())
+        cursor.execute(instr,varil)
+        db.commit()
+        db.close()
+        print('Row inserted.')
+
+        
         
     def update(tablename,fields,**kwargs):
         """Updates table. Input arguments:
