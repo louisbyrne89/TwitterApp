@@ -9,21 +9,22 @@ import Twitter
 
 class Twitter_object:
     """ Twitter object """
-    def __init__(self,**kwargs):
+    def __init__(self, **kwargs):
         """ Initiates class. Keyword arguments (twitter fields) stored as class 
         attriubutes. Empty cells stored as empty strings. List of twitter 
         fields which have been retrieved stored as self.fields 
         """
         self.api = Twitter.API.Api_control()
         self.fields = []
+       
         for key,value in kwargs.items():
             if value:
                 setattr(self,key,value)
             else:
                 setattr(self,key,'')                
             self.fields.append(key)
-
-    def print_object(self,*args):
+        
+    def print_object(self, *args):
         """Prints tweet to screen. Option arguments specifying attributes to
         print to screen are required.
         """
@@ -42,7 +43,7 @@ class Twitter_object:
         
 class Tweet(Twitter_object):
     """Tweet subclass"""
-    def __init__(self,**kwargs):
+    def __init__(self, **kwargs):
         """Initiates class. If any of the fields 'user','text' or 'tweet' 
         are not provided as **kwargs then an error is returned.
         """
@@ -57,25 +58,36 @@ class Tweet(Twitter_object):
     
 class User(Twitter_object):
     """User_subclass"""
-    def __init__(self,**kwargs):
+    def __init__(self, **kwargs):
         """Initiates class. If either of the fields 'screen_name' or 'user_id' 
         are not provided as **kwargs then an error is returned.
         """
+        
         if (not set(['user_id','screen_name','description']) 
                     <= set(kwargs.keys())):
             raise KeyError('Either user_id or screen_name field not ' +
                                   'provided.')
         super().__init__(**kwargs)
+        self.proc = 0
+        self.ncursor_followers = -1
+        self.ncursor_followings = -1
+        self.following_proc = 0
+        self.followers_proc = 0
+        self.fields.append('proc')
+        self.fields.append('ncursor_followers')
+        self.fields.append('ncursor_followings')
+        self.fields.append('following_proc')
+        self.fields.append('followers_proc')
     
     def __str__(self):
         return '{}: {}'.format(self.screen_name, self.description)
     
 class Twitter_list(object):
     """Twitter list class. Defines a list of twitter objects."""
-    def __init__(self,mediator):
+    def __init__(self):
         """Initialises class."""
-        self.Database_connector = Twitter.API.Database_connector        
-        self.Control = mediator
+        self._database_connector = None       
+        self._control = None
         self.data = []
         
     def __len__(self):
@@ -96,29 +108,36 @@ class Twitter_list(object):
         self.data = self.data[:-1]
         return item
     
-    def extend(self,item):
+    def append(self, item):
+        """Appends twitter object to list."""
+        self.data.append(item)
+    
+    def extend(self, item):
         """Extend twitter list by multiple objects."""
-        self.data.extend(item)
-        
+        self.data.extend(item)    
+    
+    def set_mediator(self, mediator):
+        self._control = mediator
+         
     @abc.abstractmethod
-    def append(self,item):
-        """Creates tweet object and appends to list."""
+    def cappend(self,item):
+        """Creates twitter object and appends to list."""
         pass
     
     @abc.abstractmethod
     def insert(self,item):
-        """Insert tweet list into database."""
+        """Insert twitter list into database."""
         pass
     
     @abc.abstractmethod
     def retrieve(self,item):
-        """Retrieve tweet list from database."""
+        """Retrieve twitter list from database."""
         pass
         
         
 class Tweet_list(Twitter_list):
     """Subclass of twitter list used for lists of tweets."""
-    def append(self,item):
+    def cappend(self,item):
         """Reformats certain fields then appends tweet object to tweet list."""
         hashlst = []
         umlst = []
@@ -151,19 +170,20 @@ class Tweet_list(Twitter_list):
             if not set(['user','text','tweet_id','url','hashtags','date',
                         'user_mentions']) <= set(tweet.fields):
                 raise KeyError('All required fields were not provided.')  
-        self.Database_connector.insert(self,tablename)
+        #import pdb; pdb.set_trace()
+        self._control._database_connector.insert_object(self,tablename)
     
     def retrieve(self,tablename='tweets',fields=None,**kwargs):
         """Retrieves data from database using specified fields and keyword
         arguments. See help Database_connector.retrieve for more information.
         """
-        self.Database_connector.retrieve(self,tablename,fields,**kwargs)
+        self._control._database_connector.retrieve(self,tablename,fields,
+                                                  **kwargs)
         
     def process(self,keywords):
         """Returns the percentage of tweets containing a set of keywords.
         """
-        if not self.keyword_scores:
-            self.keyword_scores = []
+        self.keyword_scores = {}
         for keyword in keywords:
             score = 0
             for item in self.data:   
@@ -175,11 +195,9 @@ class Tweet_list(Twitter_list):
     
 class User_list(Twitter_list):
     """Subclass of twitter list used for lists of users."""
-    def append(self, item):
+    def cappend(self, **kwargs):
         """Reformats certain fields then appends user object to tweet list."""
-        self.data.append(User(screen_name = item['user']['screen_name'],
-                              description = item['user']['description'],
-                              user_id = item['user']['id']))
+        self.data.append(User(**kwargs))
         
     def insert(self,tablename='users'):
         """Checks required fields present in all user objects then inserts
@@ -189,11 +207,12 @@ class User_list(Twitter_list):
             if (not set(['user_id','screen_name','description']) 
                         <= set(user.fields)):
                 raise KeyError('All required fields were not provided.')
-        self.Database_connector.insert(self,tablename)
+        #import pdb; pdb.set_trace()
+        self._control._database_connector.insert_object(self,tablename)
     
     def retrieve(self,tablename='users',fields=None,**kwargs):
         """Retrieves data from database using specified fields and keyword
         arguments. See help Database_connector.retrieve for more information.
         """        
-        self.Database_connector.retrieve(self,tablename,fields,**kwargs)
+        self._control._database_connector.retrieve(self,tablename,fields,**kwargs)
  

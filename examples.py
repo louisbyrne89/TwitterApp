@@ -15,7 +15,7 @@ ctrl = Control()
 
 # Search twitter for keywords
 search = 'search/tweets'
-indict = {'q': 'python jobs bristol',
+indict = {'q': 'jobs python junior',
           'lang':'en'}
 tweet_list, user_list = tf.sample_tweets(ctrl,search,indict)
 
@@ -26,14 +26,21 @@ tweet_list, user_list = tf.sample_tweets(ctrl,search,indict)
 #tweet_list,users = ctrl.sample_tweets(search,indict)
 
 # insert users and tweets into database
-tweet_list.insert()
+#tweet_list.insert()
+
 user_list.insert()
 
 # Get all tweets (id, text and user) from database with a tweet_id > 100 whose 
 # username isnt 'louisbyrne'
-tweet_list = Tweet_list(ctrl)
+tweet_list = Tweet_list()
+tweet_list.set_mediator(ctrl)
 tweet_list.retrieve(fields=['tweet_id','text','user'],tweet_id='>100',
                     user='!= "louisbyrne"')
+
+# get users follwers list
+user = user_list[0]
+#user_list = tf.get_followers(ctrl, user)
+
 
 
     

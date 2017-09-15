@@ -16,7 +16,7 @@ class Api_control:
     """This class controls interactions with the TwitterAPI."""  
     def __init__(self):
         """Twitter API keys loaded from file and API connects to API."""
-        
+        self._control = None
         with open(r'C:\Users\Louis\python\twitter_not_git\keys.txt', 'r') as f:
             keys = json.load(f)
             
@@ -26,21 +26,25 @@ class Api_control:
                    keys['access_token_secret'])
         self.quotas = {}
         
+    def set_mediator(self,mediator):
+        self._control = mediator
+        
     def request(self,search,indict):
         """Makes API request. If quota is used up then process is delayed for
         15 minutes. Input arguments:
             search: Twitter API resource to query.
             indict: filter parameters
         """
-        if search not in self.quotas.keys() or self.quotas[search]:
-            req = self.api.request(search, indict)              
-            quota = req.get_rest_quota()['remaining']
-            self.update_usage_limits(search,quota)
-            self.req = req
-        else:
-            print('Quota used for "{}". Sleeping for 15 minutes.'.format(
-                    search))
-            time.sleep(900)
+        while 1:
+            if search not in self.quotas.keys() or self.quotas[search]:
+                req = self.api.request(search, indict)              
+                quota = req.get_rest_quota()['remaining']
+                self.update_usage_limits(search,quota)
+                return req
+            else:
+                print('Quota used for "{}". Sleeping for 15 minutes.'.format(
+                        search))
+                time.sleep(900)
     
     def update_usage_limits(self,search,quota):
         """Update Api_control with new Twitter rate quota following request.
@@ -53,19 +57,19 @@ class Api_control:
          
        
 class Database_connector:
-    def insert(list_obj,tablename):
+    def insert_object(list_obj,tablename):
         """Inserts list of twitter objects into specified table. 
         Input arguments:
             list_obj: twitter or user list.
             tablename: name of table to insert data into.
         """
         # Connects to database.
-        list_obj.db = sqlite3.connect(
+        db = sqlite3.connect(
                 r'C:\Users\Louis\python\twitter_databases\twitdb.db')
         # Loop through tweets.
         for idx,obj in enumerate(list_obj.data):
             # Open database cursor.
-            cursor = list_obj.db.cursor()
+            cursor = db.cursor()
             # Create query insert statement string using comma delimited
             # fields ('fields'), question marks ('questions') and a list of
             # the values to be inserted (varil)    
@@ -77,13 +81,37 @@ class Database_connector:
             # Attempts to insert data.
             try:
                 cursor.execute(instr,varil)
-                list_obj.db.commit()
+                db.commit()
                 print('Row inserted.')
             except sqlite3.Error:
                 print('Unable to insert {}.'.format(str(idx)))
         # Close database.
-        list_obj.db.close()
+        db.close()
         
+    def update(tablename,fields,**kwargs):
+        """Updates table. Input arguments:
+                tablename: name of table to update.
+                fields: fields to update. Dictionary with key = field and
+                value = value.
+                **kwargs: conditional arguments (e.g. user_id to update).
+                key = field and value = contitional argument (e.g. '= 100')
+                
+        Multiple fields and kwargs can be provided.
+        """
+        db = sqlite3.connect(
+                r'C:\Users\Louis\python\twitter_databases\twitdb.db')
+        cursor = db.cursor()
+        fieldstr = ', '.join(['{} = {}'.format(key,value) 
+                             for key,value in fields.items()])
+    
+        critstr = ' AND '.join(['{} {}'.format(key,value) for key,value
+                                in kwargs.items()])
+                
+        upstr = 'UPDATE {} SET {} WHERE {}'.format(tablename, fieldstr, 
+                                                   critstr)
+        #import pdb; pdb.set_trace()
+        cursor = cursor.execute(upstr)     
+                
     def retrieve(list_obj,tablename,fields=None,**kwargs):
         """Retrieves data from database using specified fields and keyword
         arguments. Inputs:
@@ -97,15 +125,13 @@ class Database_connector:
                 user_name = '= louisbyrne'
                 )
         """
-        list_obj.db = sqlite3.connect(
+        db = sqlite3.connect(
                 r'C:\Users\Louis\python\twitter_databases\twitdb.db')
-        cursor = list_obj.db.cursor()
+        cursor = db.cursor()
         # Creates string used to refine database search (everything after
         # WHERE...).
-        criteria = []
-        for key, value in kwargs.items():
-            criteria.append(key + ' ' +  value)
-        critstr = ' AND '.join(criteria)
+        critstr = ' AND '.join(['{} {}'.format(key,value) for key,value
+                                in kwargs.items()])
         # Returns fields which will be retrieved from the database. If fields
         # are provided to function, these are reformatted to string. If no
         # fields are provided, 'fields' populated by requesting all the table 
@@ -114,7 +140,7 @@ class Database_connector:
             fistr = ','.join(fields)
             selstr = 'SELECT {} FROM {}'.format(fistr,tablename)
         else:
-            selstr = 'SELECT * from ' + tablename
+            selstr = 'SELECT * FROM ' + tablename
             ficrs = cursor.execute('PRAGMA table_info({})'.format(tablename))
             fiftch = ficrs.fetchall()
             fields = [fiftch[i][1] for i,fie in enumerate(fiftch)]
@@ -130,5 +156,5 @@ class Database_connector:
             kwargs = dict([(col, row[i]) for i,col in enumerate(fields)])
             obj = Twitter_object(**kwargs)    
             list_obj.data.append(obj)
-        list_obj.db.close()
+        db.close()
         

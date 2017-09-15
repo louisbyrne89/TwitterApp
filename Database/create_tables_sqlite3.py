@@ -30,11 +30,13 @@ def create_table_users():
                    CREATE TABLE users( user_id INTEGER PRIMARY KEY,
                                        screen_name TEXT NOT NULL,
                                        description TEXT NOT NULL,
-                                       followers TEXT,
-                                       following TEXT,
-                                       proc BOOLEAN,
-                                       following_proc BOOLEAN,
-                                       followers_proc BOOLEAN
+                                       proc BOOLEAN NOT NULL,
+                                       ncursor_followers INTEGER NOT NULL,
+                                       ncursor_followings INTEGER NOT NULL,
+                                       followings INTEGER NOT NULL,
+                                       followers INTEGER NOT NULL,
+                                       following_proc BOOLEAN NOT NULL,
+                                       followers_proc BOOLEAN NOT NULL
                                        )
                    ''')
     db.commit()
