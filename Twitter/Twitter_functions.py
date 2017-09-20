@@ -53,7 +53,7 @@ def process_tweets(control, keywords):
                       'user_id':user.user_id}
         control._database_connector.insert('scores',fields,
                                            user_id = '=' + str(user.user_id))
-        print(user)
+        print(str(user))
 
 
 def get_following(control, user, cursor=-1):

@@ -15,7 +15,7 @@ ctrl = Control()
 
 # Search twitter for keywords
 search = 'search/tweets'
-indict = {'q': 'jobs python junior',
+indict = {'q': 'jobs python uk',
           'lang':'en'}
 tweet_list, user_list = tf.sample_tweets(ctrl,search,indict)
 
